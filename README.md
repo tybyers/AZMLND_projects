@@ -134,7 +134,7 @@ There are some ways we might improve the models. This includes:
 * Perhaps clean the data a bit more thoroughly.  
 * Try to use a balanced data set rather than imbalanced one.  
 * With the selected best model, do hyperparameter tuning if we can using HyperDrive.  
-* The AUC of 0.98 from the ROC curve for the AutoML model indicates we should be able to achieve a better accuracy than the 91.6% that we did. We should do more work to adjust the default threshold value to achieve better accurace. 
+* The AUC of 0.98 from the ROC curve for the AutoML model indicates we should be able to achieve a better accuracy than the 91.6% that we did. We should do more work to adjust the default threshold value to achieve better accuracy. 
 
 ## Proof of cluster clean up
 
