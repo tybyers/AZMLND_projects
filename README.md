@@ -22,7 +22,7 @@ Of note, we did try to use other metrics, such as AUC, but were getting a number
 
 ## Best Model
 
-The best performing model was a [Voting Ensemble](https://docs.microsoft.com/en-us/python/api/azureml-train-automl-runtime/azureml.train.automl.runtime.ensemble.votingensemble?view=azure-ml-py) model in the AutoML experiment. It achieved an accuracy of 91.6%. This was only slightly better, however, than the LogisticRegression model with optimized hyperparameters using a HyperDrive experiment (91.5%). We don't believe that Accuracy was the most optimal metric to focus on (AUC would have been better), but as previously mentioned we were having difficulties using other metric types. 
+The best performing model was a [Voting Ensemble](https://docs.microsoft.com/en-us/python/api/azureml-train-automl-runtime/azureml.train.automl.runtime.ensemble.votingensemble?view=azure-ml-py) model in the AutoML experiment. It achieved an accuracy of 91.63%. This was only slightly better, however, than the LogisticRegression model with optimized hyperparameters using a HyperDrive experiment (91.46%). We don't believe that Accuracy was the most optimal metric to focus on (AUC would have been better), but as previously mentioned we were having difficulties using other metric types. 
 
 ## Scikit-learn Pipeline
 
@@ -64,9 +64,9 @@ Our HyperDrive model displayed a shockingly low amount of variation for the vari
 Below are the metrics from our "best" model; again, however, the overall difference between models was very small at best.
 
 ```python
-{'Regularization Strength:': 0.7529378926392385,
- 'Max iterations:': 250,
- 'Accuracy': 0.9150227617602428}
+{'Regularization Strength:': 0.9164214624777227,
+ 'Max iterations:': 50,
+ 'Accuracy': 0.9146181082448154}
  ```
 
 ## AutoML
