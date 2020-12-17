@@ -81,21 +81,27 @@ Then executed the `endpoint.py` script:
 Next, I modified the `aml-pipelines-with-automated-machine-learning-step.ipynb` Jupyter Notebook (see repo) with variables that matched my environment, uploaded the config.json file to the Azure environment, and ran the cells to create a Pipeline in Azure ML Studio. Various screenshots from the process are below:
 
 Pipeline section of ML Studio, showing pipeline has been created: 
+
 ![](./screenshots/pipeline_complete.png)
 
 Pipeline endpoint: 
+
 ![](./screenshots/pipeline_endpoint.png)
 
 Bankmarketing data set in pipeline: 
+
 ![](./screenshots/bankmarketing-data-automl.png)
 
 Published pipeline overview: 
+
 ![](./screenshots/published-pipeline-overview.png)
 
 RunDetailsWidget: 
+
 ![](./screenshots/rundetailswidget.png)
 
 Scheduled run of pipeline via endpoint: 
+
 ![](./screenshots/pipeline-rerun.png)
 
 
