@@ -1,18 +1,106 @@
-*NOTE:* This file is a template that you can use to create the README for your project. The *TODO* comments below will highlight the information you should be sure to include.
+# Azure ML Engineer Nanodegree Project 2
 
+This repo is my project submission for Project #2 of the [Udacity Azure Machine Learning Engineer Nanodegree](https://www.udacity.com/course/machine-learning-engineer-for-microsoft-azure-nanodegree--nd00333).
 
-# Your Project Title Here
-
-*TODO:* Write an overview to your project.
+In this project, we use Azure to configure a cloud-based machine learning production model, deploy it, and consume it. We also create, publish, and consume a pipeline. 
 
 ## Architectural Diagram
-*TODO*: Provide an architectual diagram of the project and give an introduction of each step. An architectural diagram is an image that helps visualize the flow of operations from start to finish. In this case, it has to be related to the completed project, with its various stages that are critical to the overall flow. For example, one stage for managing models could be "using Automated ML to determine the best model". 
+
+The following diagram visualizes the key steps of this project, which are then documented in more detail below.
+
+![](./screenshots/arch_diagram.png)
 
 ## Key Steps
-*TODO*: Write a short discription of the key steps. Remeber to include all the screenshots required to demonstrate key steps. 
+
+There were several steps to this project:
+
+### Step 1: Authentication
+
+I actually skipped this step, because I was using a Udacity-provided lab account, and the instructions said we did not have the permissions to do this step on the Udacity-provided labs.
+
+### Step 2: Automated ML Experiment
+
+For this step, I first made sure the proper data set was uploaded and registered in the 
+ML Studio:
+
+![registered_dataset](./screenshots/registered_datasets.png)
+
+Then I created a new Automated ML run, which I titled "proj02". Then I set up a new compute cluster, called "proj02-compute". Next I ran the experiment!
+
+The experiment successfully ran:
+
+![successful run](./screenshots/run_completed.png)  
+
+The best model was a "VotingEnsemble" model, with an accuracy of 91.8%:
+
+![best model](./screenshots/best_model.png)
+
+The ROC curves looked nice too!
+
+![best model metrics](./screenshots/best_model_metrics.png)
+
+### Step 3: Deploy the Best Model
+
+The next step was to select the best model and deploy it using Azure Container Instance. Here is a screenshot of the best model, which I named "best-model-voting-ensemble," deployed as an endpoint:
+
+![best-model-deployed](./screenshots/best-model-as-endpoint.png)
+
+### Step 4: Enable Logging
+
+Next we updated the `logs.py` code to enable application insights: 
+
+![logs-py](./screenshots/logs-py.png)
+
+We verify Application Insights was enabled: 
+
+![application insights](./screenshots/application_insights.png) 
+
+And ran the `logs.py` code to get an output of the logs:
+
+![logs_run](./screenshots/logs_run.png) 
+
+### Step 5: Swagger Documentation  
+
+Next, I downloaded the `swagger.json` file (available in this repo), ran the `swagger.sh` and `serve.py` code, and interacted with the Swagger documentation. Below are screenshots of the API methods and responses.
+
+![swagger1](./screenshots/swagger1.png)  
+![swagger2](./screenshots/swagger2.png)  
+
+### Step 6: Consume Model Endpoints
+
+Next, we consumed the model endpoints. First we modified the `endpoint.py` script with the URI and key:  
+
+![endpoint](./screenshots/endpoint-py.png)  
+
+Then executed the `endpoint.py` script: 
+
+![ran endpoint](./screenshots/run-endpoint.png) 
+
+### Step 7: Create, Publish, and Consume a Pipeline
+
+Next, I modified the `aml-pipelines-with-automated-machine-learning-step.ipynb` Jupyter Notebook (see repo) with variables that matched my environment, uploaded the config.json file to the Azure environment, and ran the cells to create a Pipeline in Azure ML Studio. Various screenshots from the process are below:
+
+Pipeline section of ML Studio, showing pipeline has been created: 
+![](./screenshots/pipeline_complete.png)
+
+Pipeline endpoint: 
+![](./screenshots/pipeline_endpoint.png)
+
+Bankmarketing data set in pipeline: 
+![](./screenshots/bankmarketing-data-automl.png)
+
+Published pipeline overview: 
+![](./screenshots/published-pipeline-overview.png)
+
+RunDetailsWidget: 
+![](./screenshots/rundetailswidget.png)
+
+Scheduled run of pipeline via endpoint: 
+![](./screenshots/pipeline-rerun.png)
+
 
 ## Screen Recording
-*TODO* Provide a link to a screen recording of the project in action. Remember that the screencast should demonstrate:
 
-## Standout Suggestions
-*TODO (Optional):* This is where you can provide information about any standout suggestions that you have attempted.
+My 4-minute screencast walking through this project may be found at: https://youtu.be/i0yuUdNmfK4 
+
+
