@@ -110,3 +110,14 @@ Scheduled run of pipeline via endpoint:
 My 4-minute screencast walking through this project may be found at: https://youtu.be/i0yuUdNmfK4 
 
 
+## Opportunities for Improvement
+
+There are a few ways we could improve this project:  
+
+* I could have set up my own Azure account in order to learn how to do authentication.  
+* For the AutoML portion, I could have chosen a different metric besides "Accuracy." This is an imbalanced dataset, so using a different metric -- such as AUC -- could have been appropriate.  
+* Perhaps I could have spent some time doing some feature engineering on the Banking data set. I just used it "as is" without trying to do anything to improve the data before it was modeled. 
+* We deployed the "best model" from an accuracy perspective. Perhaps, however, we need to use a more "explainable" model, especially since it seems we are making loan decisions. Choosing a simpler, not ensemble, model, may give us the power to do so.  
+* It would be good to try to consume the model endpoints with more than just the two given points of data as the JSON paylod, both of which resulted in "no" decisions.  
+* From the project assignment perspective, I'll admit I didn't learn a lot about the pipeline process. As feedback for the project creators, leaving more of the pipeline cells as "TODO" for the students would be a good thing from a teaching/learning perspective.  
+* I am also quite an amateur when it comes to doing screencasts. An improvement I could undertake is to practice this skill more :).
