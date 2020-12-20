@@ -15,6 +15,11 @@ With this data set, for this project, we esentially conducted two related proces
 1. The first process is to use Azure ML studio user interface to set up an AutoML run to find the best model to get the highest accuracy for the data. After the AutoML run completes, we deploy the best model as an endpoint. We then look at the Swagger documentation for this model, enable Application Insights (logging), and test out model consumption with a small JSON payload (note for project grader: testing out the model payload apparently produced the incorrect answer: [No, No] instead of [Yes, No]. This is interesting and we don't know the reason for this other than perhaps the model building process is non-deterministic and perhaps our best model was just slightly different than the typical model).  
 2. The second part of this project was to use code and the Python SDK to publish a create and publish a pipeline. The pipeline itself used the same banking data set, conducted an AutoML experiment, and captured the best model. We then published and consumed that pipeline using the Python SDK. 
 
+Some thoughts on operationalization:
+
+1. For the AutoML endpoint itself (the best model), we'd essentially "deploy" this to a production instance by passing the URI and key to our production process. Then, we could pass in the JSON payload whenever we wanted to get a "loan decision" from our web app, for instance.  
+2. For the Pipeline -- this is applicable if we receive perhaps new data over time and want to run the pipeline process to retrain the model.  
+
 ## Architectural Diagram
 
 The following diagram visualizes the key steps of this project, which are then documented in more detail below.
