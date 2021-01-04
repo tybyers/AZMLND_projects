@@ -9,6 +9,19 @@
 
 ## Dataset
 
+First 10k lines from From https://www.kaggle.com/c/microsoft-malware-prediction
+
+Removed "Machine Identifier" column
+
+```
+> train_10k %>% count(HasDetections)
+# A tibble: 2 x 2
+  HasDetections     n
+          <dbl> <int>
+1             0  4950
+2             1  5050
+```
+
 ### Overview
 *TODO*: Explain about the data you are using and where you got it from.
 
