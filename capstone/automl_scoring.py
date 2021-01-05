@@ -1,5 +1,5 @@
 import json
-import numpy as np
+import pandas as pd
 import os
 import joblib
 from azureml.core.model import Model
@@ -13,8 +13,9 @@ def init():
 
 def run(data):
     try:
-        data = np.array(json.loads(data))
-        result = model.predict(data)
+        df = pd.DataFrame.from_dict(json.loads(data)['data'])
+        df.drop(['MachineIdentifier', 'HasDetections'], axis=1, inplace=True)
+        result = model.predict(df)
         return result.tolist()
     except Exception as e:
         error = str(e)
