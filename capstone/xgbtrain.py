@@ -124,6 +124,9 @@ def main():
         print("Accuracy: %.2f%% (%.2f%%)" % (results.mean()*100, results.std()*100))
     else:
         run.log("Accuracy", np.float(results.mean()))
+        
+    os.makedirs('outputs', exist_ok=True)
+    joblib.dump(self.model, 'outputs/model.joblib')
 
 if __name__ == '__main__':
     main()
