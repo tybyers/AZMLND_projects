@@ -5,10 +5,10 @@ import numpy as np
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import KFold
 from sklearn.model_selection import cross_val_score
-#from azureml.core.run import Run
-#from azureml.data.dataset_factory import TabularDatasetFactory as tdf
-#import joblib
-#import os
+from azureml.core.run import Run
+from azureml.data.dataset_factory import TabularDatasetFactory as tdf
+import joblib
+import os
 
 LABEL_COLS = ['ProductName', 'EngineVersion', 'AppVersion', 'AvSigVersion', 'RtpStateBitfield', 'DefaultBrowsersIdentifier', 
               'CityIdentifier', 'OrganizationIdentifier', 'Platform', 'Processor', 'OsVer', 'OsPlatformSubRelease', 
@@ -92,10 +92,14 @@ def main():
     
     parser = argparse.ArgumentParser()
     
-    parser.add_argument('--max_depth', type=int, default=6, help="Maximum depth of a tree. Increasing this value will make the model more complex and more likely to overfit.")
-    parser.add_argument('--n_estimators', type=int, default=100, help="Number of boosting rounds. Trains faster when smaller; too large can overfit.")
-    parser.add_argument('--learning_rate', type=float, default=0.3, help='Step size shrinkage used in update to prevents overfitting. Range: [0, 1]')
-    parser.add_argument('--from_csv', type=str, default='False', help='Load from CSV. Use this if using offline (testing purposes mostly).')
+    parser.add_argument('--max_depth', type=int, default=6, 
+                        help="Maximum depth of a tree. Increasing this value will make the model more complex and more likely to overfit.")
+    parser.add_argument('--n_estimators', type=int, default=100, 
+                        help="Number of boosting rounds. Trains faster when smaller; too large can overfit.")
+    parser.add_argument('--learning_rate', type=float, default=0.3, 
+                        help='Step size shrinkage used in update to prevents overfitting. Range: [0, 1]')
+    parser.add_argument('--from_csv', type=str, default='False', 
+                        help='Load from CSV. Use this if using offline (testing purposes mostly).')
     parser.add_argument('--data_path', type=str, default=DATA_PATH, help='Path to data')
 
     args = parser.parse_args()    
@@ -109,9 +113,9 @@ def main():
         df = modelrun.load_data_csv()
     else:
         run = Run.get_context()
-
-        run.log("Regularization Strength:", np.float(args.C))
-        run.log("Max iterations:", np.int(args.max_iter))
+        run.log('max_depth:', np.int(args.max_depth))
+        run.log('n_estimators:', np.int(args.n_estimators))
+        run.log('learning_rate:', np.float(args.learning_rate))
         df = modelrun.load_data_tdf()
 
     results = modelrun.run_cv(df, args.max_depth, args.n_estimators, args.learning_rate)
