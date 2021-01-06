@@ -126,7 +126,7 @@ def main():
         run.log("Accuracy", np.float(results.mean()))
         
     os.makedirs('outputs', exist_ok=True)
-    joblib.dump(self.model, 'outputs/model.joblib')
+    joblib.dump(modelrun.model, 'outputs/model.joblib')
 
 if __name__ == '__main__':
     main()
