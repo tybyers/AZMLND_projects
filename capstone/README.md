@@ -130,16 +130,151 @@ Note the Run ID from the highlighted line above, and compare to the Run ID from 
 Next, we compared this model to the HyperDrive-tuned model to see which one we should deploy. 
 
 ## Hyperparameter Tuning
-*TODO*: What kind of model did you choose for this experiment and why? Give an overview of the types of parameters and their ranges used for the hyperparameter search
 
+For the Hyperparameter tuning experiment, done via HyperDrive, we opted for tuning an XGBoost model. We did this because, of the top 10 performing AutoML models, 4 of them were XGBoost Classifiers. We are unsure how much hyperparameter tuning, if any, happens with AutoML, so we wanted to see if we could do any better than the AutoML XGBoost.
+
+### Details  
+
+For the HyperDrive experiment, we had to write an entry script, which can be see in the "xgbtrain.py" file in this repo.  This script allows up to 5 parameters to be passed into it -- only 3 of which we actually used for tuning the hyperparameters.  
+
+We opted to tune the following hyperparameters because, based on our experience using XGBoost in the past, these are some of the highest-leverage hyperparameters to tune:
+
+```python
+param_sampling = RandomParameterSampling({'--max_depth': choice(range(2,11)),
+                                         '--n_estimators': choice(25, 50, 100, 250, 500, 750, 1000),
+                                         '--learning_rate': uniform(0, 1.0)})`
+```
+* `max_depth` - Maximum depth of a tree. Increasing this value will make the model more complex and more likely to overfit.
+* `n_estimators` - Number of boosting rounds. Trains faster when smaller; too large can overfit.
+* `learning_rate` - Step size shrinkage used in update to prevents overfitting. Range: [0, 1]
+
+The remainder of our HyperDrive configuration is below, with an explanation following. 
+
+```python
+early_termination_policy = BanditPolicy(evaluation_interval=2, slack_factor=0.1)
+
+src = ScriptRunConfig(source_directory=project_folder,
+                      script='xgbtrain.py',
+#                      arguments=['--kernel', 'linear', '--penalty', 1.0],
+                      compute_target=cpu_cluster,
+                      environment=hyperdrive_env)
+
+hyperdrive_config = HyperDriveConfig(run_config=src,
+                                    hyperparameter_sampling=param_sampling,
+                                    policy=early_termination_policy,
+                                    primary_metric_name='Accuracy',
+                                    primary_metric_goal=PrimaryMetricGoal.MAXIMIZE,
+                                    max_total_runs=100,
+                                    max_concurrent_runs=4)
+```
+
+* `early_termination_policy = BanditPolicy` - This is an early termination policy that terminates any runs where the metric is not performing well compared to the best-performing run. The benefit of this policy is that especially for long-running trials it will terminate early if the accuracy metric is too far off the best run so far, and in that way it will speed up the overall compute.  
+* `environment=hyperdrive_env` -- Explained below  
+* `primary_metric_name='Accuracy'` -- Opted for Accuracy here to be consistent with the AutoML experiment.  
+* `primary_metric_goal=PrimaryMetricGoal.MAXIMIZE` -- Obviously we want the highest accuracy and not the lowest :). 
+* `max_total_runs=100` -- XGBoost can train fairly fast, so let's see if we get any real outstanding hits. Even so, limit to only 100 runs.  
+* `max_concurrent_runs=4` -- Run up to 4 models in parallel.  
+
+### Environment
+
+We also had to create a custom conda environment to run the experiment. 
+
+We did so using some Jupyter cell magic, which wrote a new file called "hyperdrive_dependencies.yml":
+
+```python
+%%writefile hyperdrive_dependencies.yml
+
+dependencies:
+- python=3.6.2
+- scikit-learn
+- pandas 
+- numpy
+- pip:
+    - azureml-defaults
+    - xgboost
+```
+
+Then we created a conda environment from this file:
+
+```python
+hyperdrive_env = Environment.from_conda_specification(name = 'hyperdrive-env', file_path = './hyperdrive_dependencies.yml')
+```
 
 ### Results
-*TODO*: What are the results you got with your model? What were the parameters of the model? How could you have improved it?
 
-*TODO* Remeber to provide screenshots of the `RunDetails` widget as well as a screenshot of the best model trained with it's parameters.
+Next, we ran the experiment! Note that this was a 5-fold cross-validation, just like for AutoML. 
+
+The best model gave an accuracy of 0.626, and the worst model and accuracy of 0.5785.
+
+The best model's parameters were: 
+  * `max_depth`: 2  
+  * `n_estimators`: 100  
+  * `learning_rate`: ~0.19  
+
+The worst model's parameters were:  
+  * `max_depth`: 9  
+  * `n_estimators`: 25  
+  * `learning_rate`: ~0.93
+
+In general, we noticed that a small `max_depth` (2 or 3), at least 100 estimators, and a low `learning_rate` helped achieve a better score. This is probably due to the high cardinality of this data set with a relatively small number of observations, so it would be easy to overfit.    
+
+Below is are two screenshots of the RunDetails widget. As we can see, there wasn't a huge amount of variability in the results between the various models.   
+
+![hyperdrive run details](./figs/hd_rundetails.png)
+
+![hyperdrive run details2](./figs/hd_rundetails2.png)
+
+One fun note -- our best HyperDrive XGBoost model performed better than the best XGBoost AutoML model by an Accuracy of 0.002! (still worse than the VotingEnsemble, but better than the best XGBoost model!)
+
+Looking in the Azure ML Portal, we can confirm what we are seeing within the Jupyter notebooks, regarding the best model and its hyperparameters: 
+
+![hd_model_list](./figs/hd_parameter_samp.png)
+
+And finally another look at the details of the top model and the hyperparameters. 
+![hd_portal](./figs/hd_portal_topmodel_details.png) 
+
+### Registering the Best Model
+
+Just like for the automl model, we also registered the best hyperdrive model. Below is a screenshot of the Azure ML Portal with the best model saved. 
+
+![hyperdrive_model_list](./figs/hd_model_list.png)
+
+Note the Run ID from the highlighted line above, and compare to the Run ID from the Run details list in the previous section. 
+
+Next, we compared this model to the HyperDrive-tuned model to see which one we should deploy. 
 
 ## Model Deployment
-*TODO*: Give an overview of the deployed model and instructions on how to query the endpoint with a sample input.
+
+Finally, we deployed the best model -- which happened to be the `VotingEnsemble` model from the AutoML run, as an endpoint.  
+
+The details for doing this are in the `automl.ipynb` Jupyter notebook (screenshot below), starting at the "Model Deployment" section. After registering our best model, we then created an Inference and Deployment config, and then deployed as a Web Service.
+
+![automl deploy](./figs/automl_deploy_jupyter.png)
+
+We can see below the endpoint as active in the Azure ML Portal:
+
+![automl_as_endpoint](./figs/automl_as_endpoint.png)
+
+Clicking into the endpoint we see the details of the endpoint:
+
+![automl endpoint details](./figs/automl_endpoint_details.png)
+
+and information related to how to consume the endpoint:  
+
+![automl endpoint consume](./figs/automl_endpoint_consume.png)  
+
+### Testing Endpoint
+
+We then tested the endpoint with 5 sample data points that we harvested from the original Kaggle data set (not part of the 10,000 rows we grabbed used to train the model).
+
+![test_endpoint.png](./figs/test_endpoint.png) 
+
+The URL for that test data set is at: 'https://raw.githubusercontent.com/tybyers/AZMLND_projects/capstone/capstone/data/test_data.json' 
+
+The "automl_scoring.py" file in this repo is the file that we use to format the test data and send it to the web service.
+
+Our quick little test of 5 data points got 3/5 correct -- that is, 60% accuracy, or well in line with our expectations from our HyperDrive run.  
+
 
 ## Screen Recording
 *TODO* Provide a link to a screen recording of the project in action. Remember that the screencast should demonstrate:
@@ -147,5 +282,3 @@ Next, we compared this model to the HyperDrive-tuned model to see which one we s
 - Demo of the deployed  model
 - Demo of a sample request sent to the endpoint and its response
 
-## Standout Suggestions
-*TODO (Optional):* This is where you can provide information about any standout suggestions that you have attempted.
