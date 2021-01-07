@@ -1,0 +1,9 @@
+
+dependencies:
+- python=3.6.2
+- scikit-learn
+- pandas 
+- numpy
+- pip:
+    - azureml-defaults
+    - xgboost
