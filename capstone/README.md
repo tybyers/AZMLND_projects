@@ -1,11 +1,35 @@
-*NOTE:* This file is a template that you can use to create the README for your project. The *TODO* comments below will highlight the information you should be sure to include.
+# Using AzureML to Predict Malware Infections
 
-# Your Project Title Here
+This repo is my project submission for the Capstone of the [Udacity Azure Machine Learning Engineer Nanodegree](https://www.udacity.com/course/machine-learning-engineer-for-microsoft-azure-nanodegree--nd00333).
 
-*TODO:* Write a short introduction to your project.
+## Project Overview
+
+For this project, we used a data set from the 2019 [Microsoft Malware Prediction](https://www.kaggle.com/c/microsoft-malware-prediction) Kaggle competition. Due to the large size of the data set, we used a truncated version of the data (only about 0.1% of the original data) so that we could complete all the tasks in a reasonable amount of time. More information about the data set is below in the *Dataset* section. 
+
+We opted to treat this as a *classification* task, using *accuracy* as our metric.
+
+For this project, we ran essentially two processes:
+
+1. First we set up an Azure [AutoML](https://docs.microsoft.com/en-us/azure/machine-learning/concept-automated-ml) experiment using the Python SDK. With this AutoML run, we attempted to find the best model -- that is, the model with the highest accuracy in predicting malware infections on our data set (using cross-validation).    
+2. Next we ran an Azure [HyperDrive](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-tune-hyperparameters) experiment, using XGBoost as our algorithm of choice, to tune three different hyperparameters and find the best-performing model (again using cross-validation).  
+
+After determining our best model (spoiler alert: the AutoML VotingEnsemble model), we deployed it as an webservice/endpoint, tested consumption of the model using addtional data, and finally shut down the webservice.
+
 
 ## Project Set Up and Installation
-*OPTIONAL:* If your project has any special installation steps, this is where you should put it. To turn this project into a professional portfolio project, you are encouraged to explain how to set up this project in AzureML.
+
+In order to run this project yourself, you will need to:
+
+  * Sign into [Microsoft Azure Machine Learning](https://ml.azure.com/).  
+  * Set up a Compute Instance. *Note*: the Udacity Labs automatically set this up for us, with the following VM size: `STANDARD_DS3_V2 (4 Cores, 14 GB RAM, 28 GB Disk)`, and `CPU`.  
+  * From the "Notebooks" tab, upload the following files from this repo:  
+    * automl.ipynb  
+    * automl_scoring.py  
+    * hyperparameter_tuning.ipynb  
+    * xgbtrain.py  
+  * Make sure you have access to the data we have truncated and provided at: 
+    * train data:  https://raw.githubusercontent.com/tybyers/AZMLND_projects/capstone/capstone/data/train_1_10k.csv  
+    * test data: https://raw.githubusercontent.com/tybyers/AZMLND_projects/capstone/capstone/data/test_data.json 
 
 ## Dataset
 
@@ -15,7 +39,7 @@ This data set was taken from the [Microsoft Malware Prediction](https://www.kagg
 
 The raw training data set for the competition is very large: 8,921,483 observations (rows), and 83 features (variables), taking up 4.1 GB of space! 
 
-In order to allow us to complete the tasks for this assignment in a reasonable amount of time, we took a very small subset of the entire train.csv data set -- just 10,000 rows (or about 0.1% of the entire training set). We skimmed off the top 10,000 rows from the data set for use in this project, and put it on our GitHub at https://raw.githubusercontent.com/tybyers/AZMLND_projects/capstone/capstone/data/train_1_10k.csv.
+In order to allow us to complete the tasks for this assignment in a reasonable amount of time, we took a very small subset of the entire train.csv data set -- just 10,000 rows (or about 0.1% of the entire training set). We skimmed off the top 10,000 rows from the data set for use in this project, and put it on our GitHub at https://raw.githubusercontent.com/tybyers/AZMLND_projects/capstone/capstone/data/train_1_10k.csv.  
 
 ### Task
 
@@ -27,21 +51,83 @@ For our 10,000 row data set, 4,950 machines have no malware detections, and 5,05
 
 I have uploaded the modified/truncated data to this GitHub repo and am accessing it in the following manner, using the Azure Python SDK:
 
+
 ```python
-# Load Data set
+# Load Training Data set
 data_path = 'https://raw.githubusercontent.com/tybyers/AZMLND_projects/capstone/capstone/data/train_1_10k.csv'
 dataset = tdf.from_delimited_files(path=data_path)
 dataset.to_pandas_dataframe().head()
 ```
 
+```python
+# Load Test Data Set
+import requests
+test_data_path = 'https://raw.githubusercontent.com/tybyers/AZMLND_projects/capstone/capstone/data/test_data.json'
+
+r = requests.get(test_data_path)
+input_data = r.text
+```
 
 ## Automated ML
-*TODO*: Give an overview of the `automl` settings and configuration you used for this experiment
+
+The first experiment was an AutoML experiment. Our settings and configuration for the experiment looked as thus:
+
+```python
+automl_settings = {
+    "experiment_timeout_minutes": 30,
+    "max_concurrent_iterations": 5,
+    "primary_metric" : 'accuracy'
+}
+
+# TODO: Put your automl config here
+automl_config = AutoMLConfig(
+    compute_target=cpu_cluster,
+    task="classification",
+    training_data=dataset,
+    label_column_name='HasDetections',
+    enable_early_stopping=True,
+    path=project_folder,
+    debug_log='automl_errors.log',
+    n_cross_validations=5,
+    **automl_settings
+)
+```
+
+Some of the config and settings were straightforward, but we chose other configurations for the following reasons:
+
+  * `experiment_timeout_minutes = 30` -- Opted for 30 minutes so our Udacity-provided labs wouldn't time out, and this seemed to be sufficient to get through the training. Based on the RunDetails widget it appears a couple jobs were canceled, but since the overall results were pretty stable we judge this wasn't a large factor.
+  * `max_concurrent_iterations = 5` -- Runs some iterations in parallel to speed up processing.  
+  * `primary_metric = 'accuracy'` -- We opted for accuracy here, although AUC would have been a good choice too. Mostly opted for this for simplicity to compare it to the Hyperdrive run.  
+  * `task = 'classification'` -- Since we're classifying whether a machine is infected or not, this is a natural choice.  
+  * `label_column_name = 'HasDetections'` - This is the "target" column.  
+  * `enable_early_stopping = True` - No need to keep going if models are doing well enough.  
+  * `n_cross_validations = 5` - Wanted to do some cross validation. Especially important with a small data set with high cardinality.  
 
 ### Results
-*TODO*: What are the results you got with your automated ML model? What were the parameters of the model? How could you have improved it?
 
-*TODO* Remeber to provide screenshots of the `RunDetails` widget as well as a screenshot of the best model trained with it's parameters.
+The best model overall was the `VotingEnsemble` model, with an accuracy of 0.6378. The remainder of the models were between about .505 and 0.624 (`StackedEnsemble` was 0.6357).
+
+Here is a screeenshot of the `RunDetails` widget from the Jupyter notebook:
+
+![automl_rundetails](./figs/automl_run_details.png).
+
+If we look at the details of this model in the Azure ML Portal, we can see the AUC was 0.687 (which was also close to the winning AUC for the Kaggle competition using the larger version of this data set)
+
+![automl_model_best](./figs/automl_model_best.png)
+
+Next, we look the best model's Feature Importances, and we see only 5 features actually contributed meaningfully to the model. 
+
+![best model feature importance](./figs/automl_feature_importance.png) 
+
+### Registering the Best Model
+
+We then registered the best model. Below is a screenshot of the Azure ML Portal with the best model saved (note we also have the best HyperDrive model too). 
+
+![autmol_best_model_model_list](./figs/automl_best_model_model_list.png)
+
+Note the Run ID from the highlighted line above, and compare to the Run ID from the Run details list in the previous section. 
+
+Next, we compared this model to the HyperDrive-tuned model to see which one we should deploy. 
 
 ## Hyperparameter Tuning
 *TODO*: What kind of model did you choose for this experiment and why? Give an overview of the types of parameters and their ranges used for the hyperparameter search
